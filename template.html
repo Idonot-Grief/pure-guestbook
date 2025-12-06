@@ -1,0 +1,62 @@
+<h2>Guestbook</h2>
+
+<form id="guestbookForm">
+  <label>Your Name:</label><br>
+  <input type="text" id="name" size="40" required><br><br>
+
+  <label>Your Message:</label><br>
+  <textarea id="message" rows="4" cols="40" required></textarea><br><br>
+
+  <button type="submit">Post Message</button>
+</form>
+
+<br><br>
+
+<h3>Messages:</h3>
+<div id="guestbookMessages"></div>
+
+<script>
+// Build URLs dynamically using the same host/IP the user is on
+const API_PORT = 8080;
+const MSG_PORT = 80;  // Change this if the JSON is on another port
+
+const API_URL = `http://${location.hostname}:${API_PORT}`;
+const JSON_URL = `http://${location.hostname}:${MSG_PORT}/guestbook.json`;
+
+// Load messages from JSON and display
+async function loadMessages() {
+  try {
+    const res = await fetch(JSON_URL);
+    const messages = await res.json();
+    const messagesDiv = document.getElementById('guestbookMessages');
+    messagesDiv.innerHTML = messages.map(m => 
+      `${m.name} | ${m.date} | ${m.text}`
+    ).join('<br><br>');
+  } catch (err) {
+    console.error("Could not load guestbook:", err);
+  } 
+}
+
+// Handle form submit
+document.getElementById('guestbookForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const name = document.getElementById('name').value.trim();
+  const text = document.getElementById('message').value.trim();
+  if (!name || !text) return;
+
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, text })
+    });
+    document.getElementById('guestbookForm').reset();
+    loadMessages();
+  } catch (err) {
+    console.error("Failed to post message:", err);
+  }
+});
+
+// Initial load
+loadMessages();
+</script>
